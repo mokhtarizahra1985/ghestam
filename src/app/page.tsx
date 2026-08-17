@@ -7,6 +7,7 @@ import LoanList from "@/components/LoanList";
 import MonthlyOverview from "@/components/MonthlyOverview";
 import PaymentChecklist from "@/components/PaymentChecklist";
 import DebtSummary from "@/components/DebtSummary";
+import OverdueSummary from "@/components/OverdueSummary";
 import { usePayments } from "@/hooks/usePayments";
 import { formatToman } from "@/lib/format";
 
@@ -61,6 +62,10 @@ export default function Home() {
           <span className="text-sm sm:text-base">جمع اقساط این ماه</span>
           <span className="text-xl font-bold">{formatToman(totalMonthlyNow)}</span>
         </div>
+      )}
+
+      {!loading && (
+        <OverdueSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />
       )}
 
       {!loading && <DebtSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />}

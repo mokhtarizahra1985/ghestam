@@ -106,6 +106,7 @@ export type InstallmentItem = {
   index: number; // 1-based installment number within the loan
   amount: number;
   dateLabel: string; // e.g. "۱۱ تیر ۱۴۰۵"
+  dueDate: Date;
 };
 
 // Flattens every loan into its individual installments, sorted chronologically.
@@ -114,17 +115,40 @@ export function allInstallments(loans: Loan[]): InstallmentItem[] {
     const day = loanPaymentDay(loan);
     return loanMonthKeys(loan).map((month, i) => {
       const [jy, jm] = month.split("-").map(Number);
+      const jd = clampJalaliDay(jy, jm, day);
+      const { gy, gm, gd } = jalaali.toGregorian(jy, jm, jd);
       return {
         loanId: loan.id,
         loanName: loan.name,
         month,
         index: i + 1,
         amount: loan.installmentAmount,
-        dateLabel: formatJalaliParts(jy, jm, clampJalaliDay(jy, jm, day)),
+        dateLabel: formatJalaliParts(jy, jm, jd),
+        dueDate: new Date(gy, gm - 1, gd),
       };
     });
   });
   return items.sort((a, b) => (a.month === b.month ? 0 : a.month < b.month ? -1 : 1));
+}
+
+// Unpaid installments whose due date has already passed (strictly before today).
+export function overdueInstallments(
+  loans: Loan[],
+  paidSet: Set<string>,
+  now: Date = new Date()
+): InstallmentItem[] {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return allInstallments(loans).filter(
+    (item) => !paidSet.has(paymentKey(item.loanId, item.month)) && item.dueDate < today
+  );
+}
+
+export function totalOverdueAmount(
+  loans: Loan[],
+  paidSet: Set<string>,
+  now: Date = new Date()
+): number {
+  return overdueInstallments(loans, paidSet, now).reduce((sum, item) => sum + item.amount, 0);
 }
 
 // Set membership key for a paid installment: `${loanId}:${month}`.
