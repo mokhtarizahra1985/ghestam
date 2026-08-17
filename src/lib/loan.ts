@@ -128,7 +128,7 @@ export function allInstallments(loans: Loan[]): InstallmentItem[] {
       };
     });
   });
-  return items.sort((a, b) => (a.month === b.month ? 0 : a.month < b.month ? -1 : 1));
+  return items.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
 }
 
 // Unpaid installments whose due date has already passed (strictly before today).
