@@ -20,4 +20,18 @@ model Loan {
   installmentCount   Int
   startDate          DateTime
   createdAt          DateTime @default(now())
+  payments           InstallmentPayment[]
+}
+
+// Tracks which installment (identified by its Jalali "jy-jm" month key) has
+// been paid. Installments themselves are computed from Loan, not stored.
+model InstallmentPayment {
+  id        String   @id @default(cuid())
+  loanId    String
+  monthKey  String
+  paid      Boolean  @default(false)
+  paidAt    DateTime?
+  loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@unique([loanId, monthKey])
 }

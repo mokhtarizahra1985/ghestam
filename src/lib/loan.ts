@@ -93,3 +93,25 @@ export function formatMonthLabel(key: MonthKey): string {
   const { gy, gm, gd } = jalaali.toGregorian(jy, jm, 1);
   return formatJalaliMonthYear(new Date(gy, gm - 1, gd));
 }
+
+export type InstallmentItem = {
+  loanId: string;
+  loanName: string;
+  month: MonthKey;
+  index: number; // 1-based installment number within the loan
+  amount: number;
+};
+
+// Flattens every loan into its individual installments, sorted chronologically.
+export function allInstallments(loans: Loan[]): InstallmentItem[] {
+  const items = loans.flatMap((loan) =>
+    loanMonthKeys(loan).map((month, i) => ({
+      loanId: loan.id,
+      loanName: loan.name,
+      month,
+      index: i + 1,
+      amount: loan.installmentAmount,
+    }))
+  );
+  return items.sort((a, b) => (a.month === b.month ? 0 : a.month < b.month ? -1 : 1));
+}

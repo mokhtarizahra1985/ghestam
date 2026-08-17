@@ -5,6 +5,7 @@ import type { Loan } from "@/lib/loan";
 import LoanForm from "@/components/LoanForm";
 import LoanList from "@/components/LoanList";
 import MonthlyOverview from "@/components/MonthlyOverview";
+import PaymentChecklist from "@/components/PaymentChecklist";
 import { formatToman } from "@/lib/format";
 
 export default function Home() {
@@ -73,6 +74,8 @@ export default function Home() {
           <LoanList loans={loans} onEdit={setEditingLoan} onDeleted={fetchLoans} />
         )}
       </section>
+
+      {!loading && <PaymentChecklist loans={loans} />}
 
       {!loading && <MonthlyOverview loans={loans} />}
     </main>
