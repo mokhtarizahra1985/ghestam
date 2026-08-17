@@ -15,7 +15,7 @@ datasource db {
 model Loan {
   id                 String   @id @default(cuid())
   name               String
-  principalAmount    Float
+  principalAmount    Float?
   installmentAmount  Float
   installmentCount   Int
   startDate          DateTime

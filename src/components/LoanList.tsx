@@ -46,7 +46,9 @@ export default function LoanList({ loans, onEdit, onDeleted }: Props) {
             return (
               <tr key={loan.id} className="border-t border-slate-100">
                 <td className="px-4 py-3 font-medium text-slate-800">{loan.name}</td>
-                <td className="px-4 py-3">{formatToman(loan.principalAmount)}</td>
+                <td className="px-4 py-3">
+                  {loan.principalAmount != null ? formatToman(loan.principalAmount) : "—"}
+                </td>
                 <td className="px-4 py-3">{formatToman(loan.installmentAmount)}</td>
                 <td className="px-4 py-3">{loan.installmentCount}</td>
                 <td className="px-4 py-3">{formatJalaliDate(loan.startDate)}</td>

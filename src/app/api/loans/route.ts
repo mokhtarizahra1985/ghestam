@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   if (
     !name ||
-    typeof principalAmount !== "number" ||
+    (principalAmount !== null && principalAmount !== undefined && typeof principalAmount !== "number") ||
     typeof installmentAmount !== "number" ||
     !Number.isInteger(installmentCount) ||
     installmentCount <= 0 ||
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const loan = await prisma.loan.create({
     data: {
       name,
-      principalAmount,
+      principalAmount: principalAmount ?? null,
       installmentAmount,
       installmentCount,
       startDate: new Date(startDate),

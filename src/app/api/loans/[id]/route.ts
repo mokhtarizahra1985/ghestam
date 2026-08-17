@@ -20,7 +20,7 @@ export async function PUT(
 
   if (
     !name ||
-    typeof principalAmount !== "number" ||
+    (principalAmount !== null && principalAmount !== undefined && typeof principalAmount !== "number") ||
     typeof installmentAmount !== "number" ||
     !Number.isInteger(installmentCount) ||
     installmentCount <= 0 ||
@@ -33,7 +33,7 @@ export async function PUT(
     where: { id },
     data: {
       name,
-      principalAmount,
+      principalAmount: principalAmount ?? null,
       installmentAmount,
       installmentCount,
       startDate: new Date(startDate),

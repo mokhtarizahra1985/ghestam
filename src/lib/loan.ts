@@ -4,7 +4,7 @@ import { formatJalaliMonthYear } from "@/lib/jalali";
 export type Loan = {
   id: string;
   name: string;
-  principalAmount: number;
+  principalAmount: number | null;
   installmentAmount: number;
   installmentCount: number;
   startDate: string | Date;

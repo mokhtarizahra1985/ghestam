@@ -5,6 +5,7 @@ import DatePicker, { DateObject } from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import type { Loan } from "@/lib/loan";
+import { digitsOnly, formatWithSeparators } from "@/lib/format";
 
 type Props = {
   onSaved: () => void;
@@ -15,7 +16,7 @@ type Props = {
 export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) {
   const [name, setName] = useState(editingLoan?.name ?? "");
   const [principalAmount, setPrincipalAmount] = useState(
-    editingLoan ? String(editingLoan.principalAmount) : ""
+    editingLoan?.principalAmount != null ? String(editingLoan.principalAmount) : ""
   );
   const [installmentAmount, setInstallmentAmount] = useState(
     editingLoan ? String(editingLoan.installmentAmount) : ""
@@ -38,7 +39,7 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
 
     const payload = {
       name,
-      principalAmount: Number(principalAmount),
+      principalAmount: principalAmount ? Number(principalAmount) : null,
       installmentAmount: Number(installmentAmount),
       installmentCount: Number(installmentCount),
       startDate,
@@ -46,12 +47,11 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
 
     if (
       !payload.name.trim() ||
-      !payload.principalAmount ||
       !payload.installmentAmount ||
       !payload.installmentCount ||
       !payload.startDate
     ) {
-      setError("لطفا همه فیلدها را پر کنید.");
+      setError("لطفا فیلدهای الزامی را پر کنید.");
       return;
     }
 
@@ -120,12 +120,13 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-slate-600">
-          مبلغ کل وام (تومان)
+          مبلغ کل وام (تومان) <span className="text-slate-400">(اختیاری)</span>
           <input
-            type="number"
-            value={principalAmount}
-            onChange={(e) => setPrincipalAmount(e.target.value)}
-            placeholder="مثلا: 100000000"
+            type="text"
+            inputMode="numeric"
+            value={formatWithSeparators(principalAmount)}
+            onChange={(e) => setPrincipalAmount(digitsOnly(e.target.value))}
+            placeholder="مثلا: 100,000,000"
             className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
         </label>
@@ -133,9 +134,10 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
         <label className="flex flex-col gap-1 text-sm text-slate-600">
           تعداد اقساط
           <input
-            type="number"
-            value={installmentCount}
-            onChange={(e) => setInstallmentCount(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            value={formatWithSeparators(installmentCount)}
+            onChange={(e) => setInstallmentCount(digitsOnly(e.target.value))}
             placeholder="مثلا: 12"
             className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
@@ -144,10 +146,11 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
         <label className="flex flex-col gap-1 text-sm text-slate-600">
           مبلغ هر قسط (تومان)
           <input
-            type="number"
-            value={installmentAmount}
-            onChange={(e) => setInstallmentAmount(e.target.value)}
-            placeholder="مثلا: 9000000"
+            type="text"
+            inputMode="numeric"
+            value={formatWithSeparators(installmentAmount)}
+            onChange={(e) => setInstallmentAmount(digitsOnly(e.target.value))}
+            placeholder="مثلا: 9,000,000"
             className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
         </label>
