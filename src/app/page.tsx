@@ -80,6 +80,8 @@ export default function Home() {
         )}
       </section>
 
+      {!loading && <MonthlyOverview loans={loans} />}
+
       {!loading && (
         <PaymentChecklist
           loans={loans}
@@ -88,8 +90,6 @@ export default function Home() {
           onTogglePaid={togglePaid}
         />
       )}
-
-      {!loading && <MonthlyOverview loans={loans} />}
     </main>
   );
 }
