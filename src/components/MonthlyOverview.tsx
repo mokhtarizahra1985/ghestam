@@ -11,16 +11,17 @@ import {
   YAxis,
 } from "recharts";
 import type { Loan } from "@/lib/loan";
-import { buildMonthlyBreakdown, formatMonthLabel, generateMonthRange } from "@/lib/loan";
+import { buildMonthlyBreakdown, formatMonthLabel, generateMonthRange, paymentKey } from "@/lib/loan";
 import { formatToman } from "@/lib/format";
 
 type Props = {
   loans: Loan[];
+  paidSet: Set<string>;
 };
 
 const FUTURE_MONTHS_OPTIONS = [6, 12, 24];
 
-export default function MonthlyOverview({ loans }: Props) {
+export default function MonthlyOverview({ loans, paidSet }: Props) {
   const [futureMonths, setFutureMonths] = useState(12);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
@@ -117,15 +118,20 @@ export default function MonthlyOverview({ loans }: Props) {
                   <tr className="bg-slate-50">
                     <td colSpan={4} className="px-4 py-3">
                       <ul className="space-y-1">
-                        {row.loans.map((l) => (
-                          <li
-                            key={l.loanId}
-                            className="flex justify-between text-slate-600 text-xs sm:text-sm"
-                          >
-                            <span>{l.loanName}</span>
-                            <span>{formatToman(l.amount)}</span>
-                          </li>
-                        ))}
+                        {row.loans.map((l) => {
+                          const isPaid = paidSet.has(paymentKey(l.loanId, row.month));
+                          return (
+                            <li
+                              key={l.loanId}
+                              className={`flex justify-between text-xs sm:text-sm ${
+                                isPaid ? "text-slate-400 line-through" : "text-slate-600"
+                              }`}
+                            >
+                              <span>{l.loanName}</span>
+                              <span>{formatToman(l.amount)}</span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </td>
                   </tr>

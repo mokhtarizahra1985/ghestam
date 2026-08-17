@@ -85,7 +85,7 @@ export default function Home() {
         )}
       </section>
 
-      {!loading && <MonthlyOverview loans={loans} />}
+      {!loading && <MonthlyOverview loans={loans} paidSet={paidSet} />}
 
       {!loading && (
         <PaymentChecklist
