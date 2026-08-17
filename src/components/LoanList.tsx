@@ -2,7 +2,13 @@
 
 import { useMemo } from "react";
 import type { Loan, MonthKey } from "@/lib/loan";
-import { formatMonthLabel, loanMonthKeys, loanPaymentDay, remainingAmount } from "@/lib/loan";
+import {
+  formatMonthLabel,
+  loanMonthKeys,
+  loanPaymentDay,
+  remainingAmount,
+  remainingInstallmentCount,
+} from "@/lib/loan";
 import { formatToman } from "@/lib/format";
 import { formatJalaliDate } from "@/lib/jalali";
 
@@ -43,6 +49,7 @@ export default function LoanList({ loans, paidSet, onEdit, onDeleted }: Props) {
             <th className="px-4 py-3 font-medium">مبلغ قسط</th>
             <th className="px-4 py-3 font-medium">مبلغ باقی‌مانده</th>
             <th className="px-4 py-3 font-medium">تعداد اقساط</th>
+            <th className="px-4 py-3 font-medium">اقساط باقی‌مانده</th>
             <th className="px-4 py-3 font-medium">روز پرداخت</th>
             <th className="px-4 py-3 font-medium">شروع</th>
             <th className="px-4 py-3 font-medium">پایان</th>
@@ -63,6 +70,7 @@ export default function LoanList({ loans, paidSet, onEdit, onDeleted }: Props) {
                   {formatToman(remainingAmount(loan, paidSet))}
                 </td>
                 <td className="px-4 py-3">{loan.installmentCount}</td>
+                <td className="px-4 py-3">{remainingInstallmentCount(loan, paidSet)}</td>
                 <td className="px-4 py-3">{loanPaymentDay(loan)}</td>
                 <td className="px-4 py-3">{formatJalaliDate(loan.startDate)}</td>
                 <td className="px-4 py-3">{formatMonthLabel(months[months.length - 1])}</td>
