@@ -1,53 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Loan } from "@/lib/loan";
-import { allInstallments, formatMonthLabel } from "@/lib/loan";
+import { allInstallments, paymentKey } from "@/lib/loan";
 import { formatToman } from "@/lib/format";
 
 type Props = {
   loans: Loan[];
+  paidSet: Set<string>;
+  loading: boolean;
+  onTogglePaid: (loanId: string, month: string) => void;
 };
 
-type PaymentKey = string; // `${loanId}:${month}`
-
-function paymentKey(loanId: string, month: string): PaymentKey {
-  return `${loanId}:${month}`;
-}
-
-export default function PaymentChecklist({ loans }: Props) {
-  const [paidSet, setPaidSet] = useState<Set<PaymentKey>>(new Set());
-  const [loading, setLoading] = useState(true);
+export default function PaymentChecklist({ loans, paidSet, loading, onTogglePaid }: Props) {
   const [hideRest, setHideRest] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/payments")
-      .then((res) => res.json())
-      .then((payments: { loanId: string; monthKey: string }[]) => {
-        setPaidSet(new Set(payments.map((p) => paymentKey(p.loanId, p.monthKey))));
-        setLoading(false);
-      });
-  }, []);
-
   const installments = useMemo(() => allInstallments(loans), [loans]);
-
-  async function togglePaid(loanId: string, month: string) {
-    const key = paymentKey(loanId, month);
-    const nextPaid = !paidSet.has(key);
-
-    setPaidSet((prev) => {
-      const next = new Set(prev);
-      if (nextPaid) next.add(key);
-      else next.delete(key);
-      return next;
-    });
-
-    await fetch("/api/payments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ loanId, month, paid: nextPaid }),
-    });
-  }
 
   if (loans.length === 0) return null;
 
@@ -95,12 +63,12 @@ export default function PaymentChecklist({ loans }: Props) {
                 <input
                   type="checkbox"
                   checked={isPaid}
-                  onChange={() => togglePaid(item.loanId, item.month)}
+                  onChange={() => onTogglePaid(item.loanId, item.month)}
                   className="w-5 h-5 accent-indigo-600 shrink-0"
                 />
                 <div className="flex-1 flex items-center justify-between gap-3 flex-wrap">
                   <span className={isPaid ? "text-slate-400 line-through" : "text-slate-800"}>
-                    {item.loanName} — قسط {item.index} ({formatMonthLabel(item.month)})
+                    {item.loanName} — قسط {item.index} ({item.dateLabel})
                   </span>
                   <span className={isPaid ? "text-slate-400" : "text-slate-700 font-medium"}>
                     {formatToman(item.amount)}

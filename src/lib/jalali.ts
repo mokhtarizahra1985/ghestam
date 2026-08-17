@@ -34,3 +34,14 @@ export function formatJalaliMonthYear(date: Date | string): string {
   const { jy, jm } = jalaali.toJalaali(d);
   return `${PERSIAN_MONTHS[jm - 1]} ${toPersianDigits(jy)}`;
 }
+
+// Formats a Jalali (jy, jm, jd) triple directly, e.g. "۱۵ مرداد ۱۴۰۵".
+export function formatJalaliParts(jy: number, jm: number, jd: number): string {
+  return `${toPersianDigits(jd)} ${PERSIAN_MONTHS[jm - 1]} ${toPersianDigits(jy)}`;
+}
+
+// Clamps a day-of-month to what's valid for the given Jalali month (handles
+// months with 29-31 days, e.g. Esfand in a non-leap year).
+export function clampJalaliDay(jy: number, jm: number, jd: number): number {
+  return Math.min(jd, jalaali.jalaaliMonthLength(jy, jm));
+}

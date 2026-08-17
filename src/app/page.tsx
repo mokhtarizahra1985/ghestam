@@ -6,12 +6,15 @@ import LoanForm from "@/components/LoanForm";
 import LoanList from "@/components/LoanList";
 import MonthlyOverview from "@/components/MonthlyOverview";
 import PaymentChecklist from "@/components/PaymentChecklist";
+import DebtSummary from "@/components/DebtSummary";
+import { usePayments } from "@/hooks/usePayments";
 import { formatToman } from "@/lib/format";
 
 export default function Home() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [loading, setLoading] = useState(true);
+  const { paidSet, loading: paymentsLoading, togglePaid } = usePayments();
 
   const fetchLoans = useCallback(async () => {
     const res = await fetch("/api/loans");
@@ -60,6 +63,8 @@ export default function Home() {
         </div>
       )}
 
+      {!loading && <DebtSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />}
+
       <LoanForm
         onSaved={handleSaved}
         editingLoan={editingLoan}
@@ -71,11 +76,18 @@ export default function Home() {
         {loading ? (
           <p className="text-slate-400 text-sm">در حال بارگذاری...</p>
         ) : (
-          <LoanList loans={loans} onEdit={setEditingLoan} onDeleted={fetchLoans} />
+          <LoanList loans={loans} paidSet={paidSet} onEdit={setEditingLoan} onDeleted={fetchLoans} />
         )}
       </section>
 
-      {!loading && <PaymentChecklist loans={loans} />}
+      {!loading && (
+        <PaymentChecklist
+          loans={loans}
+          paidSet={paidSet}
+          loading={paymentsLoading}
+          onTogglePaid={togglePaid}
+        />
+      )}
 
       {!loading && <MonthlyOverview loans={loans} />}
     </main>

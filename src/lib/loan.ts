@@ -1,5 +1,5 @@
 import * as jalaali from "jalaali-js";
-import { formatJalaliMonthYear } from "@/lib/jalali";
+import { clampJalaliDay, formatJalaliMonthYear, formatJalaliParts } from "@/lib/jalali";
 
 export type Loan = {
   id: string;
@@ -24,6 +24,11 @@ export function monthKeyOfDate(date: Date): MonthKey {
 export function addJalaliMonths(jy: number, jm: number, count: number): { jy: number; jm: number } {
   const zeroBased = (jy * 12 + (jm - 1)) + count;
   return { jy: Math.floor(zeroBased / 12), jm: (zeroBased % 12) + 1 };
+}
+
+// The Jalali day-of-month installments are due on, derived from the loan's start date.
+export function loanPaymentDay(loan: Loan): number {
+  return jalaali.toJalaali(new Date(loan.startDate)).jd;
 }
 
 // Returns the list of month keys in which the loan has an installment due,
@@ -100,18 +105,41 @@ export type InstallmentItem = {
   month: MonthKey;
   index: number; // 1-based installment number within the loan
   amount: number;
+  dateLabel: string; // e.g. "۱۱ تیر ۱۴۰۵"
 };
 
 // Flattens every loan into its individual installments, sorted chronologically.
 export function allInstallments(loans: Loan[]): InstallmentItem[] {
-  const items = loans.flatMap((loan) =>
-    loanMonthKeys(loan).map((month, i) => ({
-      loanId: loan.id,
-      loanName: loan.name,
-      month,
-      index: i + 1,
-      amount: loan.installmentAmount,
-    }))
-  );
+  const items = loans.flatMap((loan) => {
+    const day = loanPaymentDay(loan);
+    return loanMonthKeys(loan).map((month, i) => {
+      const [jy, jm] = month.split("-").map(Number);
+      return {
+        loanId: loan.id,
+        loanName: loan.name,
+        month,
+        index: i + 1,
+        amount: loan.installmentAmount,
+        dateLabel: formatJalaliParts(jy, jm, clampJalaliDay(jy, jm, day)),
+      };
+    });
+  });
   return items.sort((a, b) => (a.month === b.month ? 0 : a.month < b.month ? -1 : 1));
+}
+
+// Set membership key for a paid installment: `${loanId}:${month}`.
+export function paymentKey(loanId: string, month: string): string {
+  return `${loanId}:${month}`;
+}
+
+export function remainingInstallmentCount(loan: Loan, paidSet: Set<string>): number {
+  return loanMonthKeys(loan).filter((m) => !paidSet.has(paymentKey(loan.id, m))).length;
+}
+
+export function remainingAmount(loan: Loan, paidSet: Set<string>): number {
+  return remainingInstallmentCount(loan, paidSet) * loan.installmentAmount;
+}
+
+export function totalRemainingDebt(loans: Loan[], paidSet: Set<string>): number {
+  return loans.reduce((sum, loan) => sum + remainingAmount(loan, paidSet), 0);
 }
