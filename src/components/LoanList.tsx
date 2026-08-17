@@ -1,0 +1,74 @@
+"use client";
+
+import type { Loan, MonthKey } from "@/lib/loan";
+import { formatMonthLabel, loanMonthKeys } from "@/lib/loan";
+import { formatToman } from "@/lib/format";
+
+type Props = {
+  loans: Loan[];
+  onEdit: (loan: Loan) => void;
+  onDeleted: () => void;
+};
+
+export default function LoanList({ loans, onEdit, onDeleted }: Props) {
+  async function handleDelete(id: string) {
+    if (!confirm("این وام حذف شود؟")) return;
+    await fetch(`/api/loans/${id}`, { method: "DELETE" });
+    onDeleted();
+  }
+
+  if (loans.length === 0) {
+    return (
+      <p className="text-slate-500 text-sm bg-white border border-slate-200 rounded-xl p-5">
+        هنوز وامی ثبت نشده است.
+      </p>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+      <table className="w-full text-sm text-right">
+        <thead className="bg-slate-50 text-slate-500">
+          <tr>
+            <th className="px-4 py-3 font-medium">نام وام</th>
+            <th className="px-4 py-3 font-medium">مبلغ کل</th>
+            <th className="px-4 py-3 font-medium">مبلغ قسط</th>
+            <th className="px-4 py-3 font-medium">تعداد اقساط</th>
+            <th className="px-4 py-3 font-medium">شروع</th>
+            <th className="px-4 py-3 font-medium">پایان</th>
+            <th className="px-4 py-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {loans.map((loan) => {
+            const months: MonthKey[] = loanMonthKeys(loan);
+            return (
+              <tr key={loan.id} className="border-t border-slate-100">
+                <td className="px-4 py-3 font-medium text-slate-800">{loan.name}</td>
+                <td className="px-4 py-3">{formatToman(loan.principalAmount)}</td>
+                <td className="px-4 py-3">{formatToman(loan.installmentAmount)}</td>
+                <td className="px-4 py-3">{loan.installmentCount}</td>
+                <td className="px-4 py-3">{formatMonthLabel(months[0])}</td>
+                <td className="px-4 py-3">{formatMonthLabel(months[months.length - 1])}</td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <button
+                    onClick={() => onEdit(loan)}
+                    className="text-indigo-600 hover:underline ml-3"
+                  >
+                    ویرایش
+                  </button>
+                  <button
+                    onClick={() => handleDelete(loan.id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    حذف
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
