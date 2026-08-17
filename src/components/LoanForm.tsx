@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import DatePicker, { DateObject } from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 import type { Loan } from "@/lib/loan";
 
 type Props = {
@@ -21,9 +24,10 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
     editingLoan ? String(editingLoan.installmentCount) : ""
   );
   const [startDate, setStartDate] = useState(
-    editingLoan
-      ? new Date(editingLoan.startDate).toISOString().slice(0, 10)
-      : ""
+    editingLoan ? new Date(editingLoan.startDate).toISOString().slice(0, 10) : ""
+  );
+  const [startDateValue, setStartDateValue] = useState<DateObject | null>(
+    editingLoan ? new DateObject(new Date(editingLoan.startDate)) : null
   );
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +75,7 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
         setInstallmentAmount("");
         setInstallmentCount("");
         setStartDate("");
+        setStartDateValue(null);
       }
       onSaved();
     } finally {
@@ -101,11 +106,16 @@ export default function LoanForm({ onSaved, editingLoan, onCancelEdit }: Props) 
 
         <label className="flex flex-col gap-1 text-sm text-slate-600">
           تاریخ شروع (اولین قسط)
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          <DatePicker
+            value={startDateValue}
+            calendar={persian}
+            locale={persian_fa}
+            calendarPosition="bottom-right"
+            inputClass="border border-slate-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            onChange={(date) => {
+              setStartDateValue(date as DateObject);
+              setStartDate(date ? (date as DateObject).toDate().toISOString().slice(0, 10) : "");
+            }}
           />
         </label>
 

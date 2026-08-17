@@ -3,6 +3,7 @@
 import type { Loan, MonthKey } from "@/lib/loan";
 import { formatMonthLabel, loanMonthKeys } from "@/lib/loan";
 import { formatToman } from "@/lib/format";
+import { formatJalaliDate } from "@/lib/jalali";
 
 type Props = {
   loans: Loan[];
@@ -48,7 +49,7 @@ export default function LoanList({ loans, onEdit, onDeleted }: Props) {
                 <td className="px-4 py-3">{formatToman(loan.principalAmount)}</td>
                 <td className="px-4 py-3">{formatToman(loan.installmentAmount)}</td>
                 <td className="px-4 py-3">{loan.installmentCount}</td>
-                <td className="px-4 py-3">{formatMonthLabel(months[0])}</td>
+                <td className="px-4 py-3">{formatJalaliDate(loan.startDate)}</td>
                 <td className="px-4 py-3">{formatMonthLabel(months[months.length - 1])}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <button

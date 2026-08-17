@@ -1,3 +1,6 @@
+import * as jalaali from "jalaali-js";
+import { formatJalaliMonthYear } from "@/lib/jalali";
+
 export type Loan = {
   id: string;
   name: string;
@@ -7,25 +10,31 @@ export type Loan = {
   startDate: string | Date;
 };
 
-export type MonthKey = string; // "YYYY-MM"
+export type MonthKey = string; // Jalali "jy-jm", e.g. "1405-05"
 
-export function monthKey(year: number, month: number): MonthKey {
-  return `${year}-${String(month + 1).padStart(2, "0")}`;
+export function jalaliMonthKey(jy: number, jm: number): MonthKey {
+  return `${jy}-${String(jm).padStart(2, "0")}`;
 }
 
-export function addMonths(date: Date, count: number): Date {
-  const d = new Date(date.getFullYear(), date.getMonth() + count, 1);
-  return d;
+export function monthKeyOfDate(date: Date): MonthKey {
+  const { jy, jm } = jalaali.toJalaali(date);
+  return jalaliMonthKey(jy, jm);
 }
 
-// Returns the list of month keys (YYYY-MM) in which the loan has an installment due.
+export function addJalaliMonths(jy: number, jm: number, count: number): { jy: number; jm: number } {
+  const zeroBased = (jy * 12 + (jm - 1)) + count;
+  return { jy: Math.floor(zeroBased / 12), jm: (zeroBased % 12) + 1 };
+}
+
+// Returns the list of month keys in which the loan has an installment due,
+// one per calendar month starting from the loan's start date.
 export function loanMonthKeys(loan: Loan): MonthKey[] {
   const start = new Date(loan.startDate);
-  const startAtFirstOfMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+  const { jy, jm } = jalaali.toJalaali(start);
   const keys: MonthKey[] = [];
   for (let i = 0; i < loan.installmentCount; i++) {
-    const d = addMonths(startAtFirstOfMonth, i);
-    keys.push(monthKey(d.getFullYear(), d.getMonth()));
+    const { jy: y, jm: m } = addJalaliMonths(jy, jm, i);
+    keys.push(jalaliMonthKey(y, m));
   }
   return keys;
 }
@@ -68,32 +77,19 @@ export function buildMonthlyBreakdown(
   });
 }
 
-// Generates a contiguous list of month keys from `from` (inclusive) for `count` months.
+// Generates a contiguous list of Jalali month keys from `from` (inclusive) for `count` months.
 export function generateMonthRange(from: Date, count: number): MonthKey[] {
-  const start = new Date(from.getFullYear(), from.getMonth(), 1);
+  const { jy, jm } = jalaali.toJalaali(from);
   const keys: MonthKey[] = [];
   for (let i = 0; i < count; i++) {
-    const d = addMonths(start, i);
-    keys.push(monthKey(d.getFullYear(), d.getMonth()));
+    const { jy: y, jm: m } = addJalaliMonths(jy, jm, i);
+    keys.push(jalaliMonthKey(y, m));
   }
   return keys;
 }
 
 export function formatMonthLabel(key: MonthKey): string {
-  const [year, month] = key.split("-").map(Number);
-  const persianMonths = [
-    "ژانویه",
-    "فوریه",
-    "مارس",
-    "آوریل",
-    "می",
-    "ژوئن",
-    "ژوئیه",
-    "اوت",
-    "سپتامبر",
-    "اکتبر",
-    "نوامبر",
-    "دسامبر",
-  ];
-  return `${persianMonths[month - 1]} ${year}`;
+  const [jy, jm] = key.split("-").map(Number);
+  const { gy, gm, gd } = jalaali.toGregorian(jy, jm, 1);
+  return formatJalaliMonthYear(new Date(gy, gm - 1, gd));
 }
