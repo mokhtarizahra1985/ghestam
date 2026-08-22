@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Loan {
+  id                 String   @id @default(cuid())
+  name               String
+  principalAmount    Float?
+  installmentAmount  Float
+  installmentCount   Int
+  startDate          DateTime
+  createdAt          DateTime @default(now())
+  payments           InstallmentPayment[]
+}
+
+// Tracks which installment (identified by its Jalali "jy-jm" month key) has
+// been paid. Installments themselves are computed from Loan, not stored.
+model InstallmentPayment {
+  id        String   @id @default(cuid())
+  loanId    String
+  monthKey  String
+  paid      Boolean  @default(false)
+  paidAt    DateTime?
+  loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@unique([loanId, monthKey])
+}
