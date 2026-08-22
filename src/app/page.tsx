@@ -8,8 +8,8 @@ import MonthlyOverview from "@/components/MonthlyOverview";
 import PaymentChecklist from "@/components/PaymentChecklist";
 import DebtSummary from "@/components/DebtSummary";
 import OverdueSummary from "@/components/OverdueSummary";
+import CurrentMonthSummary from "@/components/CurrentMonthSummary";
 import { usePayments } from "@/hooks/usePayments";
-import { formatToman } from "@/lib/format";
 
 export default function Home() {
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -33,21 +33,6 @@ export default function Home() {
     fetchLoans();
   }
 
-  const totalMonthlyNow = loans
-    .filter((loan) => {
-      const now = new Date();
-      const start = new Date(loan.startDate);
-      const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
-      const endMonth = new Date(
-        startMonth.getFullYear(),
-        startMonth.getMonth() + loan.installmentCount - 1,
-        1
-      );
-      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      return currentMonth >= startMonth && currentMonth <= endMonth;
-    })
-    .reduce((sum, l) => sum + l.installmentAmount, 0);
-
   return (
     <main className="max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
       <header className="space-y-1">
@@ -57,11 +42,8 @@ export default function Home() {
         </p>
       </header>
 
-      {!loading && loans.length > 0 && (
-        <div className="bg-indigo-600 text-white rounded-xl p-5 flex items-center justify-between">
-          <span className="text-sm sm:text-base">جمع اقساط این ماه</span>
-          <span className="text-xl font-bold">{formatToman(totalMonthlyNow)}</span>
-        </div>
+      {!loading && (
+        <CurrentMonthSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />
       )}
 
       {!loading && (

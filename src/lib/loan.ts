@@ -167,3 +167,29 @@ export function remainingAmount(loan: Loan, paidSet: Set<string>): number {
 export function totalRemainingDebt(loans: Loan[], paidSet: Set<string>): number {
   return loans.reduce((sum, loan) => sum + remainingAmount(loan, paidSet), 0);
 }
+
+export type CurrentMonthSummary = {
+  month: MonthKey;
+  total: number;
+  paid: number;
+  remaining: number;
+};
+
+// Total/paid/remaining installment amounts due in the current Jalali month.
+export function currentMonthSummary(
+  loans: Loan[],
+  paidSet: Set<string>,
+  now: Date = new Date()
+): CurrentMonthSummary {
+  const month = monthKeyOfDate(now);
+  let total = 0;
+  let paid = 0;
+
+  for (const loan of loans) {
+    if (!loanMonthKeys(loan).includes(month)) continue;
+    total += loan.installmentAmount;
+    if (paidSet.has(paymentKey(loan.id, month))) paid += loan.installmentAmount;
+  }
+
+  return { month, total, paid, remaining: total - paid };
+}
