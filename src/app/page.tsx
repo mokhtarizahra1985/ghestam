@@ -1,0 +1,82 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import type { Loan } from "@/lib/loan";
+import LoanForm from "@/components/LoanForm";
+import LoanList from "@/components/LoanList";
+import MonthlyOverview from "@/components/MonthlyOverview";
+import PaymentChecklist from "@/components/PaymentChecklist";
+import DebtSummary from "@/components/DebtSummary";
+import OverdueSummary from "@/components/OverdueSummary";
+import CurrentMonthSummary from "@/components/CurrentMonthSummary";
+import { usePayments } from "@/hooks/usePayments";
+
+export default function Home() {
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { paidSet, loading: paymentsLoading, togglePaid } = usePayments();
+
+  const fetchLoans = useCallback(async () => {
+    const res = await fetch("/api/loans");
+    const data = await res.json();
+    setLoans(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchLoans();
+  }, [fetchLoans]);
+
+  function handleSaved() {
+    setEditingLoan(null);
+    fetchLoans();
+  }
+
+  return (
+    <main className="max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-900">قسط‌یار</h1>
+        <p className="text-slate-500 text-sm">
+          مدیریت وام‌ها و مشاهده چشم‌انداز اقساط ماهانه
+        </p>
+      </header>
+
+      {!loading && (
+        <CurrentMonthSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />
+      )}
+
+      {!loading && (
+        <OverdueSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />
+      )}
+
+      {!loading && <DebtSummary loans={loans} paidSet={paidSet} loading={paymentsLoading} />}
+
+      <LoanForm
+        onSaved={handleSaved}
+        editingLoan={editingLoan}
+        onCancelEdit={() => setEditingLoan(null)}
+      />
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold text-slate-800">لیست وام‌ها</h2>
+        {loading ? (
+          <p className="text-slate-400 text-sm">در حال بارگذاری...</p>
+        ) : (
+          <LoanList loans={loans} paidSet={paidSet} onEdit={setEditingLoan} onDeleted={fetchLoans} />
+        )}
+      </section>
+
+      {!loading && <MonthlyOverview loans={loans} paidSet={paidSet} />}
+
+      {!loading && (
+        <PaymentChecklist
+          loans={loans}
+          paidSet={paidSet}
+          loading={paymentsLoading}
+          onTogglePaid={togglePaid}
+        />
+      )}
+    </main>
+  );
+}
