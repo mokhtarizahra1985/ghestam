@@ -160,6 +160,11 @@ export function remainingInstallmentCount(loan: Loan, paidSet: Set<string>): num
   return loanMonthKeys(loan).filter((m) => !paidSet.has(paymentKey(loan.id, m))).length;
 }
 
+// A loan is settled once every one of its installments is marked paid.
+export function isLoanSettled(loan: Loan, paidSet: Set<string>): boolean {
+  return remainingInstallmentCount(loan, paidSet) === 0;
+}
+
 export function remainingAmount(loan: Loan, paidSet: Set<string>): number {
   return remainingInstallmentCount(loan, paidSet) * loan.installmentAmount;
 }
