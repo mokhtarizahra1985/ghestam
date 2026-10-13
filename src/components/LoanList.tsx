@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Loan, MonthKey } from "@/lib/loan";
 import {
   formatMonthLabel,
+  isLoanSettled,
   loanMonthKeys,
   loanPaymentDay,
   remainingAmount,
@@ -20,10 +21,21 @@ type Props = {
 };
 
 export default function LoanList({ loans, paidSet, onEdit, onDeleted }: Props) {
+  const [showSettled, setShowSettled] = useState(false);
+
   const sortedLoans = useMemo(
     () => [...loans].sort((a, b) => loanPaymentDay(a) - loanPaymentDay(b)),
-    [loans]
+    [loans],
   );
+  const activeLoans = useMemo(
+    () => sortedLoans.filter((loan) => !isLoanSettled(loan, paidSet)),
+    [sortedLoans, paidSet],
+  );
+  const settledLoans = useMemo(
+    () => sortedLoans.filter((loan) => isLoanSettled(loan, paidSet)),
+    [sortedLoans, paidSet],
+  );
+  const visibleLoans = showSettled ? settledLoans : activeLoans;
 
   async function handleDelete(id: string) {
     if (!confirm("این وام حذف شود؟")) return;
@@ -40,59 +52,91 @@ export default function LoanList({ loans, paidSet, onEdit, onDeleted }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-      <table className="w-full text-sm text-right">
-        <thead className="bg-slate-50 text-slate-500">
-          <tr>
-            <th className="px-4 py-3 font-medium">نام وام</th>
-            <th className="px-4 py-3 font-medium">مبلغ کل</th>
-            <th className="px-4 py-3 font-medium">مبلغ قسط</th>
-            <th className="px-4 py-3 font-medium">مبلغ باقی‌مانده</th>
-            <th className="px-4 py-3 font-medium">تعداد اقساط</th>
-            <th className="px-4 py-3 font-medium">اقساط باقی‌مانده</th>
-            <th className="px-4 py-3 font-medium">روز پرداخت</th>
-            <th className="px-4 py-3 font-medium">شروع</th>
-            <th className="px-4 py-3 font-medium">پایان</th>
-            <th className="px-4 py-3 font-medium"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedLoans.map((loan) => {
-            const months: MonthKey[] = loanMonthKeys(loan);
-            return (
-              <tr key={loan.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">{loan.name}</td>
-                <td className="px-4 py-3">
-                  {loan.principalAmount != null ? formatToman(loan.principalAmount) : "—"}
-                </td>
-                <td className="px-4 py-3">{formatToman(loan.installmentAmount)}</td>
-                <td className="px-4 py-3 font-medium text-indigo-700">
-                  {formatToman(remainingAmount(loan, paidSet))}
-                </td>
-                <td className="px-4 py-3">{loan.installmentCount}</td>
-                <td className="px-4 py-3">{remainingInstallmentCount(loan, paidSet)}</td>
-                <td className="px-4 py-3">{loanPaymentDay(loan)}</td>
-                <td className="px-4 py-3">{formatJalaliDate(loan.startDate)}</td>
-                <td className="px-4 py-3">{formatMonthLabel(months[months.length - 1])}</td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <button
-                    onClick={() => onEdit(loan)}
-                    className="text-indigo-600 hover:underline ml-3"
-                  >
-                    ویرایش
-                  </button>
-                  <button
-                    onClick={() => handleDelete(loan.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    حذف
-                  </button>
-                </td>
+    <div className="space-y-3">
+      {settledLoans.length > 0 && (
+        <button
+          onClick={() => setShowSettled((v) => !v)}
+          className="text-sm text-indigo-600 hover:underline"
+        >
+          {showSettled
+            ? "بازگشت به وام‌های فعال"
+            : `مشاهده وام‌های تسویه‌شده (${settledLoans.length})`}
+        </button>
+      )}
+      {visibleLoans.length === 0 ? (
+        <p className="text-slate-500 text-sm bg-white border border-slate-200 rounded-xl p-5">
+          {showSettled
+            ? "وام تسویه‌شده‌ای وجود ندارد."
+            : "همه وام‌ها تسویه شده‌اند."}
+        </p>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+          <table className="w-full text-sm text-right">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-medium">نام وام</th>
+                <th className="px-4 py-3 font-medium">مبلغ کل</th>
+                <th className="px-4 py-3 font-medium">مبلغ قسط</th>
+                <th className="px-4 py-3 font-medium">مبلغ باقی‌مانده</th>
+                <th className="px-4 py-3 font-medium">تعداد اقساط</th>
+                <th className="px-4 py-3 font-medium">اقساط باقی‌مانده</th>
+                <th className="px-4 py-3 font-medium">روز پرداخت</th>
+                <th className="px-4 py-3 font-medium">شروع</th>
+                <th className="px-4 py-3 font-medium">پایان</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {visibleLoans.map((loan) => {
+                const months: MonthKey[] = loanMonthKeys(loan);
+                return (
+                  <tr key={loan.id} className="border-t border-slate-100">
+                    <td className="px-4 py-3 font-medium text-slate-800">
+                      {loan.name}
+                    </td>
+                    <td className="px-4 py-3">
+                      {loan.principalAmount != null
+                        ? formatToman(loan.principalAmount)
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatToman(loan.installmentAmount)}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-indigo-700">
+                      {formatToman(remainingAmount(loan, paidSet))}
+                    </td>
+                    <td className="px-4 py-3">{loan.installmentCount}</td>
+                    <td className="px-4 py-3">
+                      {remainingInstallmentCount(loan, paidSet)}
+                    </td>
+                    <td className="px-4 py-3">{loanPaymentDay(loan)}</td>
+                    <td className="px-4 py-3">
+                      {formatJalaliDate(loan.startDate)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatMonthLabel(months[months.length - 1])}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <button
+                        onClick={() => onEdit(loan)}
+                        className="text-indigo-600 hover:underline ml-3"
+                      >
+                        ویرایش
+                      </button>
+                      <button
+                        onClick={() => handleDelete(loan.id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        حذف
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
